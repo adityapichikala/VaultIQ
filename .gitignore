@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.env
+.env
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+.DS_Store
+*.ipynb_checkpoints
+chroma_db/
+qdrant_storage/
+*.pdf
+*.csv
+data/raw/
