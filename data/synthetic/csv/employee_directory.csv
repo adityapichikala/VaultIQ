@@ -1,0 +1,31 @@
+employee_id,full_name,email,department,team,role,level,manager_id,location,joining_date,status
+EMP001,Vikram Mehta,vikram.mehta@bigcorp.com,Engineering,Leadership,VP Engineering,M3,,Bangalore,2019-03-15,Active
+EMP002,Arjun Nair,arjun.nair@bigcorp.com,Engineering,Platform Engineering,Director of Engineering,M2,EMP001,Bangalore,2020-01-10,Active
+EMP003,Kavitha Sundaram,kavitha.sundaram@bigcorp.com,Engineering,Product Engineering,Director of Engineering,M2,EMP001,Bangalore,2020-06-01,Active
+EMP004,Anil Kumar,anil.kumar@bigcorp.com,Engineering,AI & Data Science,Director of Engineering,M2,EMP001,Bangalore,2021-02-15,Active
+EMP005,Deepak Gupta,deepak.gupta@bigcorp.com,Engineering,Infrastructure,Staff Engineer,L4,EMP002,Bangalore,2020-08-01,Active
+EMP006,Meena Krishnan,meena.krishnan@bigcorp.com,Engineering,Data Platform,Staff Engineer,L4,EMP002,Bangalore,2021-03-10,Active
+EMP007,Rohit Saxena,rohit.saxena@bigcorp.com,Engineering,Developer Experience,Senior Engineer,L3,EMP002,Hyderabad,2021-07-01,Active
+EMP008,Amit Joshi,amit.joshi@bigcorp.com,Engineering,Payments,Staff Engineer,L4,EMP003,Bangalore,2019-11-15,Active
+EMP009,Sneha Patel,sneha.patel@bigcorp.com,Engineering,User Platform,Senior Engineer,L3,EMP003,Mumbai,2022-01-10,Active
+EMP010,Ravi Shankar,ravi.shankar@bigcorp.com,Engineering,Marketplace,Staff Engineer,L4,EMP003,Bangalore,2020-04-01,Active
+EMP011,Priyanka Das,priyanka.das@bigcorp.com,Engineering,Mobile,Senior Engineer,L3,EMP003,Bangalore,2022-06-15,Active
+EMP012,Sanjay Rao,sanjay.rao@bigcorp.com,Engineering,ML Platform,Staff Engineer,L4,EMP004,Bangalore,2021-01-05,Active
+EMP013,Fatima Khan,fatima.khan@bigcorp.com,Engineering,Applied AI,Senior Data Scientist,L3,EMP004,Bangalore,2021-09-01,Active
+EMP014,Karthik Venkat,karthik.venkat@bigcorp.com,Engineering,GenAI,Senior Engineer,L3,EMP004,Bangalore,2023-03-15,Active
+EMP015,Priya Sharma,priya.sharma@bigcorp.com,HR,People Operations,HR Business Partner,L3,,Bangalore,2020-05-01,Active
+EMP016,Rajesh Kumar,rajesh.kumar@bigcorp.com,Facilities,Operations,Facilities Manager,L3,,Bangalore,2018-01-10,Active
+EMP017,Anita Desai,anita.desai@bigcorp.com,HR,Benefits,Benefits Specialist,L2,,Mumbai,2022-03-01,Active
+EMP018,Divya Menon,divya.menon@bigcorp.com,HR,Talent Acquisition,Senior Recruiter,L3,,Bangalore,2021-11-01,Active
+EMP019,Ananya Iyer,ananya.iyer@bigcorp.com,Legal,Compliance,Data Protection Officer,L4,,Bangalore,2021-06-15,Active
+EMP020,Sunita Reddy,sunita.reddy@bigcorp.com,Engineering,Leadership,CTO,M3,,Bangalore,2018-06-01,Active
+EMP021,Rahul Verma,rahul.verma@bigcorp.com,Engineering,Infrastructure,Software Engineer,L2,EMP005,Hyderabad,2023-07-01,Active
+EMP022,Neha Agarwal,neha.agarwal@bigcorp.com,Engineering,Infrastructure,Software Engineer,L2,EMP005,Bangalore,2023-08-15,Active
+EMP023,Suresh Menon,suresh.menon@bigcorp.com,Engineering,Payments,Senior Engineer,L3,EMP008,Bangalore,2022-02-01,Active
+EMP024,Lakshmi Iyer,lakshmi.iyer@bigcorp.com,Engineering,Payments,Software Engineer,L2,EMP008,Mumbai,2023-01-15,Active
+EMP025,Arjun Reddy,arjun.reddy@bigcorp.com,Engineering,Marketplace,Senior Engineer,L3,EMP010,Bangalore,2022-04-01,Active
+EMP026,Pooja Nair,pooja.nair@bigcorp.com,Engineering,Marketplace,Software Engineer,L2,EMP010,Hyderabad,2023-06-01,Active
+EMP027,Manish Kumar,manish.kumar@bigcorp.com,Engineering,ML Platform,Senior Engineer,L3,EMP012,Bangalore,2022-01-10,Resigned
+EMP028,Shreya Gupta,shreya.gupta@bigcorp.com,Engineering,Applied AI,Data Scientist,L2,EMP013,Bangalore,2023-04-01,Active
+EMP029,Aditya Sharma,aditya.sharma@bigcorp.com,Engineering,GenAI,Software Engineer,L2,EMP014,Bangalore,2024-01-15,Active
+EMP030,Nisha Patel,nisha.patel@bigcorp.com,Finance,Accounts,Finance Manager,L3,,Mumbai,2019-09-01,Active

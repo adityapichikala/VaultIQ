@@ -1,0 +1,16 @@
+vendor_id,vendor_name,category,contract_value_inr,contract_start,contract_end,payment_terms,status,primary_contact,contact_email,sla_uptime
+V001,Amazon Web Services,Cloud Infrastructure,48000000,2025-04-01,2026-03-31,Net 30,Active,AWS Account Team,enterprise@aws.amazon.com,99.99%
+V002,Razorpay,Payment Gateway,12000000,2025-01-01,2025-12-31,Net 15,Active,Pradeep Singh,pradeep@razorpay.com,99.95%
+V003,Juspay,Payment Orchestration,8000000,2026-01-01,2026-12-31,Net 30,Active,Rahul Sharma,rahul.s@juspay.in,99.9%
+V004,Confluent,Kafka Managed Service,6000000,2025-07-01,2026-06-30,Net 30,Active,Ankit Mehta,ankit@confluent.io,99.95%
+V005,Snowflake,Data Warehouse,15000000,2025-10-01,2026-09-30,Net 45,Active,Lisa Chen,lisa.chen@snowflake.com,99.9%
+V006,DataDog,Observability,5500000,2025-06-01,2026-05-31,Net 30,Active,Mike Johnson,mike.j@datadoghq.com,99.9%
+V007,PagerDuty,Incident Management,1200000,2025-03-01,2026-02-28,Net 30,Active,Support Team,support@pagerduty.com,99.95%
+V008,GitHub Enterprise,Source Control,3600000,2025-01-01,2025-12-31,Annual Prepaid,Active,Enterprise Sales,enterprise@github.com,99.95%
+V009,Zendesk,Customer Support,2400000,2025-04-01,2026-03-31,Net 30,Active,Sarah Lee,sarah@zendesk.com,99.9%
+V010,Google Workspace,Productivity Suite,1800000,2025-01-01,2025-12-31,Annual Prepaid,Active,Google Sales,workspace-sales@google.com,99.9%
+V011,Cloudflare,CDN & Security,3000000,2025-06-01,2026-05-31,Net 30,Active,James Wilson,james@cloudflare.com,99.99%
+V012,MongoDB Atlas,Database (NoSQL),4800000,2025-07-01,2026-06-30,Net 30,Active,Ravi Patel,ravi.p@mongodb.com,99.95%
+V013,Freshworks,ITSM,800000,2025-09-01,2026-08-31,Net 30,Active,Girish M,girish@freshworks.com,99.9%
+V014,Stripe,International Payments,0,2026-07-01,2027-06-30,Per Transaction,Pending,Alex Thompson,alex@stripe.com,99.99%
+V015,HackerRank,Recruitment Platform,600000,2025-01-01,2025-12-31,Annual Prepaid,Active,HR Sales,sales@hackerrank.com,99.5%

@@ -11,6 +11,10 @@ build/
 *.ipynb_checkpoints
 chroma_db/
 qdrant_storage/
-*.pdf
-*.csv
 data/raw/
+data/ingested_documents.json
+
+# Internship reference docs (not part of the project)
+01_Workflow_Guide.md
+02_Technical_Problem_Compendium.md
+03_Deliverables_Specification.md

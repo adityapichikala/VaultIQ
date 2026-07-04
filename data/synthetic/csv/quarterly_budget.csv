@@ -1,0 +1,20 @@
+quarter,department,category,budget_inr,actual_inr,variance_pct,notes
+Q1 2026,Engineering,Cloud Infrastructure (AWS),12000000,11500000,-4.2,Under budget due to reserved instance savings
+Q1 2026,Engineering,SaaS Tools (GitHub/DataDog/PagerDuty),2800000,2800000,0.0,Fixed annual contracts
+Q1 2026,Engineering,Salaries & Benefits,22000000,21500000,-2.3,2 positions unfilled in Q1
+Q1 2026,Engineering,Contractor/Consulting,3000000,3500000,16.7,Over budget — hired security consultants for audit
+Q1 2026,HR,Recruitment (platforms + agencies),1500000,1200000,-20.0,Under budget — fewer hires than planned
+Q1 2026,HR,Employee Benefits & Wellness,800000,850000,6.3,Slightly over due to new wellness program
+Q1 2026,Marketing,Digital Advertising,5000000,4800000,-4.0,On track
+Q1 2026,Marketing,Events & Conferences,1200000,900000,-25.0,Under budget — 2 conferences cancelled
+Q1 2026,Finance,Software & Compliance,600000,580000,-3.3,On track
+Q2 2026,Engineering,Cloud Infrastructure (AWS),12000000,13200000,10.0,Over budget — GenAI LLM API costs higher than projected
+Q2 2026,Engineering,SaaS Tools,2800000,2800000,0.0,Fixed contracts
+Q2 2026,Engineering,Salaries & Benefits,23000000,22800000,-0.9,On track with Q2 hires
+Q2 2026,Engineering,GenAI/LLM API Costs,1500000,2400000,60.0,Significantly over budget — need cost optimization
+Q2 2026,Engineering,Contractor/Consulting,2000000,1800000,-10.0,Under budget
+Q2 2026,HR,Recruitment,2000000,1700000,-15.0,Still behind on hiring targets
+Q2 2026,HR,Employee Benefits & Wellness,800000,800000,0.0,On track
+Q2 2026,Marketing,Digital Advertising,5000000,5200000,4.0,Slightly over for festive campaign prep
+Q2 2026,Marketing,Events & Conferences,1500000,1500000,0.0,On track
+Q2 2026,Finance,Software & Compliance,600000,600000,0.0,On track

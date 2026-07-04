@@ -1,0 +1,17 @@
+project_id,project_name,team,lead,status,start_date,target_date,completion_pct,budget_inr,spent_inr,priority,quarter
+PRJ001,UPI 2.0 Integration,Payments,Amit Joshi,Completed,2026-01-15,2026-04-30,100,2500000,2200000,P0,Q1
+PRJ002,Payment Retry Logic,Payments,Sneha Patel,Completed,2026-03-01,2026-05-15,100,800000,750000,P0,Q2
+PRJ003,Juspay Migration,Payments,Amit Joshi,In Progress,2026-04-01,2026-06-30,50,3000000,1500000,P1,Q2
+PRJ004,International Payments (Stripe),Payments,Suresh Menon,Planned,2026-07-01,2026-09-30,0,4000000,0,P1,Q3
+PRJ005,Semantic Search v1,Marketplace,Ravi Shankar,Completed,2026-02-01,2026-05-31,100,1500000,1400000,P0,Q2
+PRJ006,Personalized Recommendations,Marketplace,Arjun Reddy,In Progress,2026-04-15,2026-06-30,70,2000000,1300000,P1,Q2
+PRJ007,Seller Analytics Dashboard,Marketplace,Pooja Nair,In Progress,2026-05-01,2026-07-15,40,1200000,500000,P1,Q2
+PRJ008,Dynamic Pricing Engine,Marketplace,Ravi Shankar,Planned,2026-07-15,2026-08-15,0,2500000,0,P2,Q3
+PRJ009,VaultIQ (Internal RAG),GenAI,Karthik Venkat,In Progress,2026-05-01,2026-07-31,30,1800000,600000,P0,Q2
+PRJ010,Customer Support Copilot,GenAI,Karthik Venkat,Planned,2026-08-01,2026-10-31,0,3000000,0,P1,Q3
+PRJ011,Cold Start Optimization,Mobile,Priyanka Das,Completed,2026-03-01,2026-05-31,100,600000,550000,P0,Q2
+PRJ012,Offline Catalog Mode,Mobile,Priyanka Das,In Progress,2026-05-15,2026-07-15,55,900000,450000,P1,Q2
+PRJ013,Python 3.12 Migration,Developer Experience,Rohit Saxena,In Progress,2026-06-01,2026-06-30,80,200000,150000,P1,Q2
+PRJ014,ML Feature Store,ML Platform,Sanjay Rao,In Progress,2026-03-01,2026-07-31,60,2000000,1100000,P1,Q2
+PRJ015,Elasticsearch 8.x Migration,Infrastructure,Deepak Gupta,Planned,2026-07-01,2026-08-31,0,500000,0,P2,Q3
+PRJ016,Security Audit Remediation,Infrastructure,Deepak Gupta,In Progress,2026-06-18,2026-07-15,30,300000,100000,P0,Q2
