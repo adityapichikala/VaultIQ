@@ -1,7 +1,7 @@
 # VaultIQ — Enterprise RAG over Messy Multi-Modal Data
 
 > Segment 5 · Problem E3 · LLM Systems & Applied GenAI  
-> Built by: YOUR NAME | Target role: LLM Engineer
+> Built by: Pichikala Aditya | Target role: LLM Engineer / GenAI Engineer
 
 ---
 
@@ -62,8 +62,8 @@ and Excel/CSV tables. With permissions, deduplication, citations, and eval.
 ## Quickstart
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/vaultiq
-cd vaultiq
+git clone https://github.com/adityapichikala/VaultIQ.git
+cd VaultIQ
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
