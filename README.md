@@ -5,133 +5,88 @@
 
 ---
 
-## What this is
+## What is VaultIQ?
 
-Most enterprises have 15 years of knowledge scattered across Confluence pages,
-PDFs (some scanned), Slack threads, and Excel sheets. Off-the-shelf RAG fails
-on this data because it has tables, OCR requirements, threaded conversations,
-near-duplicate documents, and permission boundaries.
+VaultIQ is a modular Retrieval-Augmented Generation (RAG) system built to handle unstructured enterprise data. It ingests PDFs, Slack JSON exports, Markdown wikis, and CSVs, applying role-based access control (ACL) to ensure users only see answers generated from documents they have permission to view.
 
-**VaultIQ** is an enterprise RAG system that handles all of this — with
-hybrid retrieval, ACL-based permissions, inline citations, and a 100 Q&A eval.
-
----
-
-## Demo
-
-> Loom walkthrough — coming Week 1  
-> Live URL — coming Week 4
-
----
-
-## Problem statement
-
-Build a "ask the company anything" internal tool over 4 source types:
-Confluence-like markdown pages, PDFs (text + scanned), Slack-like JSON threads,
-and Excel/CSV tables. With permissions, deduplication, citations, and eval.
-
-**Problem code:** E3  
-**Segment:** LLM Systems & Applied GenAI
-
----
+## Live Demo
+- **Demo Video:** [Loom Demo Link]
+- **Live URL:** [Deployed Streamlit URL]
 
 ## Architecture
 
-> Diagram coming Day 5
+VaultIQ uses a hybrid search pipeline with Reciprocal Rank Fusion (RRF) to merge semantic intent (dense vectors) with exact keyword matching (sparse vectors), re-ranked and filtered by ACL before passing to a Groq-powered LLM.
+
+![Architecture Diagram](docs/architecture.md)
+
+## Tech Stack
+
+| Component | Choice | Why |
+|-----------|--------|-----|
+| **Data Types** | PDF, MD, CSV, JSON | Realistic mix of enterprise messiness |
+| **Parsing** | PyMuPDF, custom | Fast, robust, handles edge cases |
+| **Chunking** | Custom recursive | Retains parent metadata across splits |
+| **Embedding** | all-MiniLM-L6-v2 | 384-dim, extremely fast, runs locally |
+| **Dense Store** | Qdrant | Self-hostable, fast cosine search |
+| **Sparse Index** | rank-bm25 | Essential for exact acronyms/IDs |
+| **Fusion** | RRF | Combines dense/sparse without score normalization |
+| **LLM** | Groq (Llama-3-8B) | Low-latency generation, open weights |
+| **UI** | Streamlit | Rapid prototyping for data apps |
+| **Testing** | pytest | Ensuring robust ingestion and retrieval |
+| **CI/CD** | GitHub Actions | Automated tests on every push |
 
 ---
 
-## Tech stack
+## Quickstart (Setup in < 5 mins)
 
-| Component | Tool | Why |
-|-----------|------|-----|
-| PDF parsing | PyMuPDF | Fast, handles text + image PDFs |
-| OCR | EasyOCR | Free, accurate on printed text |
-| Markdown parsing | python-markdown | Heading-aware structure |
-| Table extraction | pandas | CSV/Excel ingestion |
-| Chunking | LangChain text splitters | Semantic + structural splits |
-| Embeddings | sentence-transformers (all-MiniLM-L6-v2) | Free, runs locally |
-| Vector DB | Qdrant (local) | Hybrid search, open source |
-| BM25 | rank-bm25 | Sparse retrieval, no infra needed |
-| Reranker | cross-encoder/ms-marco-MiniLM | Improves retrieval precision |
-| LLM | Groq API (Llama-3-8b) | Free tier, fast inference |
-| UI | Streamlit | Rapid prototyping |
+### 1. Prerequisites
+- Python 3.10+
+- A [Groq API Key](https://console.groq.com) (free)
 
----
-
-## Quickstart
-
+### 2. Install & Configure
 ```bash
 git clone https://github.com/adityapichikala/VaultIQ.git
 cd VaultIQ
+
+# Setup virtual environment
 python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+# Windows: venv\Scripts\activate
+# Mac/Linux: source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
-cp .env.example .env      # add your Groq API key
-streamlit run src/app/main.py
+
+# Configure API Key
+echo "GROQ_API_KEY=your_key_here" > .env
 ```
 
-> Full setup instructions coming after Week 1 build.
+### 3. Build the Index
+This command ingests the synthetic dataset (4 PDFs, 12 MD files, 8 Slack threads, 4 CSVs), chunks them, generates vectors, and builds the Qdrant + BM25 databases locally.
+```bash
+python -m src.retrieval.build_index
+```
+
+### 4. Run the App
+Launch the Streamlit Chat UI to interact with the system.
+```bash
+streamlit run src/app/streamlit_app.py
+```
+
+### 5. Run Tests
+```bash
+python -m pytest tests/ -v
+```
 
 ---
 
-## Data sources
+## Data
 
-| Source type | Format | Example |
-|-------------|--------|---------|
-| Wiki/Confluence pages | Markdown (.md) | Company policies, onboarding docs |
-| Internal documents | PDF (text + scanned) | HR manuals, legal contracts |
-| Team conversations | JSON (Slack-like threads) | Project discussions, decisions |
-| Structured data | CSV/Excel | Org charts, vendor lists |
-
-All data is **synthetic** — generated to simulate realistic enterprise content.
-See `data/synthetic/README.md` for schema and generation instructions.
-
----
-
-## Project structure
-
-vaultiq/
-
-├── src/
-
-│   ├── ingest/        # per-source parsers
-
-│   ├── chunking/      # semantic + structural chunking
-
-│   ├── retrieval/     # BM25 + dense + reranker
-
-│   └── app/           # Streamlit UI
-
-├── data/synthetic/    # generated test documents
-
-├── docs/
-
-│   ├── architecture.png
-
-│   ├── design_doc.md
-
-│   └── adr/           # architecture decision records
-
-└── tests/
-
----
+The `/data/synthetic/` folder contains 28 synthetic files generating 255 text chunks simulating a real enterprise (BigCorp). It includes HR policies, engineering guides, database schemas, Slack incidents, and budgeting spreadsheets.
 
 ## ADRs
-
-- ADR-001: Vector DB choice — coming Week 2
-- ADR-002: Chunking strategy — coming Week 2
-- ADR-003: Retrieval architecture — coming Week 2
-
----
-
-## Known limitations
-
-- Currently uses synthetic data only (no live connectors)
-- Single-user ACL simulation (no real auth)
-
----
+- [ADR-001: Problem Statement & Tech Stack](docs/adr/ADR-001-problem-and-tech-stack.md)
+- [ADR-002: Chunking Strategy](docs/adr/ADR-002-chunking-strategy.md)
+- [ADR-003: Hybrid Retrieval Pipeline](docs/adr/ADR-003-hybrid-retrieval.md)
 
 ## License
-
-MIT
+MIT License
