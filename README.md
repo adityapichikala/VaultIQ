@@ -88,5 +88,34 @@ The `/data/synthetic/` folder contains 28 synthetic files generating 255 text ch
 - [ADR-002: Chunking Strategy](docs/adr/ADR-002-chunking-strategy.md)
 - [ADR-003: Hybrid Retrieval Pipeline](docs/adr/ADR-003-hybrid-retrieval.md)
 
+## Project Timeline & Weekly Progress
+
+This project is built over a **4-week timeline**, with specific deliverables and milestones achieved each week.
+
+### ✅ Week 1: Foundation & Data Layer
+- Defined problem statement and selected tech stack.
+- Generated synthetic enterprise dataset (PDFs, Markdown, CSVs, Slack JSONs).
+- Built initial ingestion parsers to handle multi-modal data.
+
+### ✅ Week 2: Core RAG Pipeline & UI
+- Built the document chunking module with recursive splitting.
+- Implemented vector embeddings using `all-MiniLM-L6-v2` and indexed into **Qdrant**.
+- Built a sparse retrieval index using **BM25**.
+- Implemented **Reciprocal Rank Fusion (RRF)** for hybrid search.
+- Added **Role-Based Access Control (ACL)** filtering.
+- Connected the **Groq Llama-3-8B** LLM for generation with inline citations.
+- Built the interactive **Streamlit Chat UI**.
+
+### ✅ Week 3: Hardening & Testing
+- Added `pytest` suite for unit and integration testing.
+- Set up **GitHub Actions (CI)** for automated testing on every push.
+- Audited the pipeline for robust error handling and logging (`loguru`).
+- Documented key architectural decisions in ADRs (Chunking, Hybrid Retrieval).
+
+### ⏳ Week 4: Deployment & Polish (Upcoming)
+- Deploy the Streamlit app to a public URL.
+- Write a deep-dive technical blog post / Thinking Artifact.
+- Finalize documentation, Loom walkthroughs, and Milestone 2 submission.
+
 ## License
 MIT License
