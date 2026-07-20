@@ -80,21 +80,56 @@ class EmbeddingEngine:
 
 
 class QdrantIndex:
-    """Manages the Qdrant vector store for VaultIQ."""
+    """Manages the Qdrant vector store for VaultIQ.
 
-    def __init__(self, path: str = "./qdrant_storage"):
-        """Initialize Qdrant in local file-based mode.
+    Supports two connection modes, controlled by environment variables:
+
+    **Remote (production):**
+        Set QDRANT_URL and QDRANT_API_KEY environment variables.
+        Connects to a managed Qdrant Cloud cluster over HTTPS.
+        Supports concurrent access from multiple API worker processes.
+
+    **Local (development):**
+        Leave QDRANT_URL unset (or pass `path` explicitly).
+        Uses local file-based storage via SQLite under the hood.
+        Single-process only — not safe for multi-worker deployments.
+    """
+
+    def __init__(
+        self,
+        path: str = "./qdrant_storage",
+        url: str | None = None,
+        api_key: str | None = None,
+    ):
+        """Initialize Qdrant client.
+
+        Connection priority:
+        1. `url` argument (if provided) → remote/managed Qdrant
+        2. QDRANT_URL environment variable → remote/managed Qdrant
+        3. `path` argument → local file-based Qdrant (default)
 
         Args:
-            path: Directory path for Qdrant storage.
+            path: Local directory path for file-based Qdrant storage.
+            url: URL of a managed Qdrant instance (e.g., Qdrant Cloud).
+            api_key: API key for the managed Qdrant instance.
         """
         if QdrantClient is None:
             raise ImportError(
                 "qdrant-client required. Install: pip install qdrant-client"
             )
-        self.client = QdrantClient(path=path)
-        self.collection_name = COLLECTION_NAME
-        logger.info(f"Qdrant initialized at: {path}")
+
+        # Resolve connection target: argument > env var > local file
+        qdrant_url = url or os.getenv("QDRANT_URL")
+        qdrant_api_key = api_key or os.getenv("QDRANT_API_KEY")
+
+        if qdrant_url:
+            self.client = QdrantClient(url=qdrant_url, api_key=qdrant_api_key)
+            self.collection_name = COLLECTION_NAME
+            logger.info(f"Qdrant connected to remote cluster: {qdrant_url}")
+        else:
+            self.client = QdrantClient(path=path)
+            self.collection_name = COLLECTION_NAME
+            logger.info(f"Qdrant initialized at local path: {path}")
 
     def create_collection(self, dim: int = EMBEDDING_DIM):
         """Create or recreate the vector collection.
