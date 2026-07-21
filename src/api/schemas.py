@@ -38,6 +38,16 @@ class QueryRequest(BaseModel):
         le=1.0,
         description="LLM sampling temperature. Lower = more factual.",
     )
+    apply_temporal_decay: bool = Field(
+        default=True,
+        description="If True, applies exponential decay to boost newer documents.",
+    )
+    decay_half_life_days: float = Field(
+        default=180.0,
+        ge=1.0,
+        le=3650.0,
+        description="Half-life in days for recency temporal decay.",
+    )
 
 
 class IngestRequest(BaseModel):
@@ -54,6 +64,34 @@ class IngestRequest(BaseModel):
         default=False,
         description="If True, deletes and rebuilds the existing index.",
     )
+    dataset_name: str = Field(
+        default="default",
+        description="Identifier name for the dataset collection.",
+    )
+    version: str = Field(
+        default="1.0",
+        description="Version string for the ingested dataset.",
+    )
+    effective_date: Optional[str] = Field(
+        default=None,
+        description="ISO date string (YYYY-MM-DD) for temporal decay indexing.",
+    )
+
+
+class DatasetInfo(BaseModel):
+    """Summary of an active dataset."""
+    name: str
+    version: str
+    document_count: int
+    chunk_count: int
+    created_at: str
+
+
+class DatasetListResponse(BaseModel):
+    """Response body for GET /api/v1/datasets."""
+    datasets: list[DatasetInfo]
+    total_datasets: int
+
 
 
 # ─── Response Models ──────────────────────────────────────────────

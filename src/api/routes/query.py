@@ -67,6 +67,8 @@ async def query_sync(
             query=body.query,
             user_roles=user_roles,
             top_k=body.top_k,
+            apply_temporal_decay=body.apply_temporal_decay,
+            decay_half_life_days=body.decay_half_life_days,
         )
     except Exception as e:
         logger.error(f"Retrieval failed: {e}")
@@ -183,6 +185,8 @@ async def query_stream(
             query=body.query,
             user_roles=user_roles,
             top_k=body.top_k,
+            apply_temporal_decay=body.apply_temporal_decay,
+            decay_half_life_days=body.decay_half_life_days,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Retrieval error: {str(e)}")

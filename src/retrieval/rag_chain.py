@@ -29,6 +29,7 @@ RULES:
 4. If the context contains tables, present data in a structured format.
 5. If multiple sources agree, cite the most specific one.
 6. Never make up information not in the context.
+7. COMPARATIVE & DIFF INTELLIGENCE: If the user asks about changes, differences, updates, or comparisons between document versions or policies, explicitly present a structured "Key Differences / What Changed" breakdown comparing the older vs newer documents.
 
 Example citation: "Employees are eligible for 18 days of earned leave per year [📄 leave_policy.md · Leave Types]"
 """

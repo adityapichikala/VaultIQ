@@ -20,10 +20,13 @@ class Document:
     acl_roles: list[str] = field(default_factory=lambda: ["all-employees"])
     metadata: dict = field(default_factory=dict)
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
+    effective_date: str = field(default_factory=lambda: datetime.now().strftime("%Y-%m-%d"))
+    version: str = "1.0"
+    dataset_name: str = "default"
 
     def __repr__(self):
         preview = self.content[:80].replace("\n", " ")
-        return f"Document(id={self.doc_id}, type={self.source_type}, title={self.title}, content='{preview}...')"
+        return f"Document(id={self.doc_id}, type={self.source_type}, title={self.title}, dataset={self.dataset_name}, content='{preview}...')"
 
     def to_dict(self) -> dict:
         """Convert to dictionary for serialization."""
@@ -36,6 +39,9 @@ class Document:
             "acl_roles": self.acl_roles,
             "metadata": self.metadata,
             "created_at": self.created_at,
+            "effective_date": self.effective_date,
+            "version": self.version,
+            "dataset_name": self.dataset_name,
         }
 
 

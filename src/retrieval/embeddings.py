@@ -188,6 +188,9 @@ class QdrantIndex:
                     "title": chunk.title,
                     "acl_roles": chunk.acl_roles,
                     "metadata": chunk.metadata,
+                    "effective_date": getattr(chunk, "effective_date", "2026-07-21"),
+                    "version": getattr(chunk, "version", "1.0"),
+                    "dataset_name": getattr(chunk, "dataset_name", "default"),
                 },
             )
             points.append(point)
@@ -248,6 +251,9 @@ class QdrantIndex:
                 "acl_roles": hit.payload["acl_roles"],
                 "chunk_id": hit.payload["chunk_id"],
                 "metadata": hit.payload.get("metadata", {}),
+                "effective_date": hit.payload.get("effective_date", "2026-07-21"),
+                "version": hit.payload.get("version", "1.0"),
+                "dataset_name": hit.payload.get("dataset_name", "default"),
             }
             for hit in results.points
         ]

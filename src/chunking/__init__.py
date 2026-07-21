@@ -21,6 +21,9 @@ class Chunk:
     title: str
     acl_roles: list[str] = field(default_factory=lambda: ["all-employees"])
     metadata: dict = field(default_factory=dict)
+    effective_date: str = "2026-07-21"
+    version: str = "1.0"
+    dataset_name: str = "default"
 
     def to_dict(self) -> dict:
         return {
@@ -32,6 +35,9 @@ class Chunk:
             "title": self.title,
             "acl_roles": self.acl_roles,
             "metadata": self.metadata,
+            "effective_date": self.effective_date,
+            "version": self.version,
+            "dataset_name": self.dataset_name,
         }
 
 
@@ -82,6 +88,10 @@ class DocumentChunker:
         """Split a single document into chunks."""
         text = doc.content.strip()
 
+        effective_date = getattr(doc, "effective_date", "2026-07-21")
+        version = getattr(doc, "version", "1.0")
+        dataset_name = getattr(doc, "dataset_name", "default")
+
         # If the document is already small enough, return as-is
         if len(text) <= self.chunk_size:
             chunk = Chunk(
@@ -93,6 +103,9 @@ class DocumentChunker:
                 title=doc.title,
                 acl_roles=doc.acl_roles,
                 metadata={**doc.metadata, "chunk_index": 0, "total_chunks": 1},
+                effective_date=effective_date,
+                version=version,
+                dataset_name=dataset_name,
             )
             return [chunk]
 
@@ -115,6 +128,9 @@ class DocumentChunker:
                     "chunk_index": i,
                     "total_chunks": len(segments),
                 },
+                effective_date=effective_date,
+                version=version,
+                dataset_name=dataset_name,
             )
             chunks.append(chunk)
 
