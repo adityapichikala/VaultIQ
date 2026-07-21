@@ -272,9 +272,7 @@ class State(rx.State):
 
 # ─── Helper Components ───────────────────────────────────────────
 
-def status_dot(active: bool, color: str = GREEN) -> rx.Component:
-    if not active:
-        color = "#ef4444"
+def status_dot(color: str) -> rx.Component:
     return rx.box(style={
         "width": "7px", "height": "7px",
         "border_radius": "50%",
@@ -334,15 +332,15 @@ def message_bubble(msg: Message) -> rx.Component:
                 (~is_user) & (msg.faithfulness > 0.0),
                 rx.hstack(
                     rx.box(
-                        rx.text(f"🎯 Groundedness: {int(msg.faithfulness*100)}%", font_size="0.7em", font_weight="700", color=GREEN),
+                        rx.text("🎯 Groundedness: " + (msg.faithfulness * 100).to_string() + "%", font_size="0.7em", font_weight="700", color=GREEN),
                         style={"background": f"{GREEN}15", "border": f"1px solid {GREEN}40", "border_radius": "12px", "padding": "2px 8px"},
                     ),
                     rx.box(
-                        rx.text(f"🎯 Context Precision: {int(msg.context_precision*100)}%", font_size="0.7em", font_weight="700", color=BLUE),
+                        rx.text("🎯 Context Precision: " + (msg.context_precision * 100).to_string() + "%", font_size="0.7em", font_weight="700", color=BLUE),
                         style={"background": f"{BLUE}15", "border": f"1px solid {BLUE}40", "border_radius": "12px", "padding": "2px 8px"},
                     ),
                     rx.box(
-                        rx.text(f"🎯 Answer Relevance: {int(msg.answer_relevance*100)}%", font_size="0.7em", font_weight="700", color=PURPLE),
+                        rx.text("🎯 Answer Relevance: " + (msg.answer_relevance * 100).to_string() + "%", font_size="0.7em", font_weight="700", color=PURPLE),
                         style={"background": f"{PURPLE}15", "border": f"1px solid {PURPLE}40", "border_radius": "12px", "padding": "2px 8px"},
                     ),
                     spacing="2", align_items="center", margin_top="0.4em",
