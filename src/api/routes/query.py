@@ -140,10 +140,24 @@ async def _stream_rag_response(
                 yield f"data: {token_data}\n\n"
                 await asyncio.sleep(0)  # Yield control to event loop
 
-        # Final event with sources and usage
+        # Final event with sources and debug pipeline breakdown
         sources = rag_chain._extract_sources(results)
+        chunks_debug = [
+            {
+                "chunk_id": r.get("chunk_id", ""),
+                "source_file": r.get("source_file", ""),
+                "title": r.get("title", ""),
+                "source_type": r.get("source_type", ""),
+                "rrf_score": round(r.get("rrf_score", 0.0), 5),
+                "decay_multiplier": round(r.get("decay_multiplier", 1.0), 3),
+                "effective_date": r.get("effective_date", "2026-07-21"),
+                "acl_roles": r.get("acl_roles", []),
+            }
+            for r in results
+        ]
         final_data = json.dumps({
             "sources": sources,
+            "chunks_debug": chunks_debug,
             "done": True,
         })
         yield f"data: {final_data}\n\n"

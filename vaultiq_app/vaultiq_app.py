@@ -74,6 +74,9 @@ class State(rx.State):
     health_loaded: bool = False
     error_message: str = ""
 
+    last_debug_chunks: list[dict] = []
+    last_query_text: str = ""
+
     # Navigation & Temporal Decay settings
     active_tab: str = "chat"
     apply_temporal_decay: bool = True
@@ -154,6 +157,7 @@ class State(rx.State):
     @rx.event
     def clear_chat(self):
         self.messages = []
+        self.last_debug_chunks = []
         self.error_message = ""
 
     @rx.event
@@ -184,9 +188,9 @@ class State(rx.State):
 
         user_query = self.query.strip()
         self.query = ""
+        self.last_query_text = user_query
         self.is_loading = True
         self.error_message = ""
-        self.active_tab = "chat"
 
         self.messages = self.messages + [
             Message(role="user", content=user_query),
@@ -235,6 +239,7 @@ class State(rx.State):
                                         )
                                         for s in raw_sources
                                     ]
+                                    self.last_debug_chunks = data.get("chunks_debug", [])
                             except json.JSONDecodeError:
                                 pass
         except Exception as e:
@@ -401,6 +406,17 @@ def sidebar() -> rx.Component:
                         "background": rx.cond(State.active_tab == "chat", f"{PURPLE}25", "transparent"),
                         "color": rx.cond(State.active_tab == "chat", TXT, TXT2),
                         "border": rx.cond(State.active_tab == "chat", f"1px solid {BORDER_A}", f"1px solid {BORDER}"),
+                        "border_radius": "8px", "width": "100%", "font_size": "0.83em", "font_weight": "600",
+                        "cursor": "pointer", "padding": "8px 12px", "justify_content": "start",
+                    },
+                ),
+                rx.button(
+                    "🔍 RAG Visualizer",
+                    on_click=State.set_tab("visualizer"),
+                    style={
+                        "background": rx.cond(State.active_tab == "visualizer", f"{PURPLE}25", "transparent"),
+                        "color": rx.cond(State.active_tab == "visualizer", TXT, TXT2),
+                        "border": rx.cond(State.active_tab == "visualizer", f"1px solid {BORDER_A}", f"1px solid {BORDER}"),
                         "border_radius": "8px", "width": "100%", "font_size": "0.83em", "font_weight": "600",
                         "cursor": "pointer", "padding": "8px 12px", "justify_content": "start",
                     },
@@ -641,6 +657,138 @@ def data_studio_view() -> rx.Component:
     )
 
 
+# ─── RAG Visualizer View ──────────────────────────────────────────
+
+def chunk_debug_card(chunk: dict) -> rx.Component:
+    return rx.box(
+        rx.vstack(
+            rx.hstack(
+                rx.box(
+                    rx.text(chunk["source_type"], font_size="0.7em", font_weight="700", color=PURPLE),
+                    style={"background": f"{PURPLE}20", "border": f"1px solid {PURPLE}40", "border_radius": "6px", "padding": "2px 8px"},
+                ),
+                rx.text(chunk["source_file"], font_size="0.85em", font_weight="700", color=TXT),
+                rx.spacer(),
+                rx.text("RRF Score: " + chunk["rrf_score"].to_string(), font_size="0.82em", font_weight="700", color=GREEN),
+                align_items="center", width="100%",
+            ),
+            rx.hstack(
+                rx.text("Chunk ID: " + chunk["chunk_id"].to_string(), font_size="0.75em", color=TXT2),
+                rx.text("· Effective Date: " + chunk["effective_date"].to_string(), font_size="0.75em", color=TXT2),
+                rx.text("· Decay: " + chunk["decay_multiplier"].to_string() + "x", font_size="0.75em", color=BLUE),
+                spacing="2", align_items="center",
+            ),
+            spacing="1", align_items="start", width="100%",
+        ),
+        style={
+            "background": CARD, "border": f"1px solid {BORDER}",
+            "border_radius": "10px", "padding": "12px 16px",
+            "width": "100%", "margin_top": "8px",
+        },
+    )
+
+
+def rag_visualizer_view() -> rx.Component:
+    return rx.vstack(
+        # Header
+        rx.vstack(
+            rx.heading("🔍 RAG Pipeline Inspector & Visualizer", font_size="1.5em", font_weight="800", color=TXT),
+            rx.text("Live architecture inspection: Trace chunking, dual-index routing, RRF fusion, and ACL gating.", font_size="0.85em", color=TXT2),
+            spacing="1", align_items="start", padding_bottom="1.5em",
+        ),
+
+        # Visual Architecture Diagram Card
+        rx.box(
+            rx.vstack(
+                rx.text("📐 Enterprise RAG Pipeline Architecture Flow", font_size="1.1em", font_weight="700", color=TXT),
+                rx.hstack(
+                    # Step 1
+                    rx.box(
+                        rx.vstack(
+                            rx.text("1. USER QUERY", font_size="0.72em", font_weight="800", color=PURPLE),
+                            rx.text("Prompt & Role Scope", font_size="0.78em", font_weight="600", color=TXT),
+                            rx.text("Natural language input + JWT ACL Scope", font_size="0.68em", color=MUTED),
+                            spacing="1", align_items="center",
+                        ),
+                        style={"background": BG2, "border": f"1px solid {PURPLE}50", "border_radius": "10px", "padding": "14px", "flex": "1", "text_align": "center"},
+                    ),
+                    rx.text("➔", font_size="1.2em", color=MUTED),
+                    # Step 2
+                    rx.box(
+                        rx.vstack(
+                            rx.text("2. DUAL-INDEX ROUTING", font_size="0.72em", font_weight="800", color=BLUE),
+                            rx.text("Qdrant + BM25", font_size="0.78em", font_weight="600", color=TXT),
+                            rx.text("Dense 384-dim + Sparse Okapi BM25", font_size="0.68em", color=MUTED),
+                            spacing="1", align_items="center",
+                        ),
+                        style={"background": BG2, "border": f"1px solid {BLUE}50", "border_radius": "10px", "padding": "14px", "flex": "1", "text_align": "center"},
+                    ),
+                    rx.text("➔", font_size="1.2em", color=MUTED),
+                    # Step 3
+                    rx.box(
+                        rx.vstack(
+                            rx.text("3. RRF & DECAY FUSION", font_size="0.72em", font_weight="800", color=GREEN),
+                            rx.text("k=60 + exp(-λΔt)", font_size="0.78em", font_weight="600", color=TXT),
+                            rx.text("Score blending & recency decay multiplier", font_size="0.68em", color=MUTED),
+                            spacing="1", align_items="center",
+                        ),
+                        style={"background": BG2, "border": f"1px solid {GREEN}50", "border_radius": "10px", "padding": "14px", "flex": "1", "text_align": "center"},
+                    ),
+                    rx.text("➔", font_size="1.2em", color=MUTED),
+                    # Step 4
+                    rx.box(
+                        rx.vstack(
+                            rx.text("4. LLM GENERATION", font_size="0.72em", font_weight="800", color=PURPLE),
+                            rx.text("LLaMA-3.1 via Groq", font_size="0.78em", font_weight="600", color=TXT),
+                            rx.text("Context assembly + SSE token stream", font_size="0.68em", color=MUTED),
+                            spacing="1", align_items="center",
+                        ),
+                        style={"background": BG2, "border": f"1px solid {PURPLE}50", "border_radius": "10px", "padding": "14px", "flex": "1", "text_align": "center"},
+                    ),
+                    spacing="2", width="100%", align_items="center",
+                ),
+                spacing="3", align_items="start", width="100%",
+            ),
+            style={
+                "background": CARD, "border": f"1px solid {BORDER_A}",
+                "border_radius": "14px", "padding": "20px", "width": "100%",
+            },
+        ),
+
+        # Last Query Breakdown Card
+        rx.box(
+            rx.vstack(
+                rx.hstack(
+                    rx.heading("📊 Last Retrieved Chunks & RRF Fusion Scores", font_size="1.1em", font_weight="700", color=TXT),
+                    rx.cond(
+                        State.last_query_text != "",
+                        rx.text("Query: \"" + State.last_query_text + "\"", font_size="0.82em", font_weight="600", color=PURPLE),
+                        rx.text("No query executed yet", font_size="0.82em", color=MUTED),
+                    ),
+                    justify="between", width="100%", align_items="center",
+                ),
+                rx.cond(
+                    State.last_debug_chunks.length() > 0,
+                    rx.vstack(
+                        rx.foreach(State.last_debug_chunks, chunk_debug_card),
+                        width="100%", spacing="2",
+                    ),
+                    rx.box(
+                        rx.text("Ask a question in the Chat Assistant tab to inspect live vector retrieval & RRF scores here!", font_size="0.85em", color=MUTED, padding="1.5em 0"),
+                    ),
+                ),
+                spacing="3", align_items="start", width="100%",
+            ),
+            style={
+                "background": CARD, "border": f"1px solid {BORDER}",
+                "border_radius": "14px", "padding": "20px", "width": "100%", "margin_top": "1.5em",
+            },
+        ),
+
+        spacing="0", align_items="start", width="100%", padding="2em",
+    )
+
+
 # ─── Empty State ─────────────────────────────────────────────────
 
 def empty_state() -> rx.Component:
@@ -680,23 +828,26 @@ def index() -> rx.Component:
             rx.cond(
                 State.active_tab == "data_studio",
                 data_studio_view(),
-                rx.vstack(
-                    # Chat messages area
-                    rx.box(
-                        rx.cond(
-                            State.messages.length() == 0,
-                            empty_state(),
-                            rx.vstack(
-                                rx.foreach(State.messages, message_bubble),
-                                spacing="4",
-                                align_items="stretch",
-                                width="100%",
-                                padding="1.5em",
-                                padding_bottom="1em",
+                rx.cond(
+                    State.active_tab == "visualizer",
+                    rag_visualizer_view(),
+                    rx.vstack(
+                        # Chat messages area
+                        rx.box(
+                            rx.cond(
+                                State.messages.length() == 0,
+                                empty_state(),
+                                rx.vstack(
+                                    rx.foreach(State.messages, message_bubble),
+                                    spacing="4",
+                                    align_items="stretch",
+                                    width="100%",
+                                    padding="1.5em",
+                                    padding_bottom="1em",
+                                ),
                             ),
+                            style={"flex": "1", "overflow_y": "auto", "width": "100%", "scrollbar_width": "thin"},
                         ),
-                        style={"flex": "1", "overflow_y": "auto", "width": "100%", "scrollbar_width": "thin"},
-                    ),
                     # Input bar
                     rx.box(
                         rx.cond(
@@ -758,6 +909,7 @@ def index() -> rx.Component:
                     ),
                     spacing="0", height="100vh", align_items="stretch",
                 ),
+            ),
             ),
             style={
                 "margin_left": "255px", "flex": "1",
