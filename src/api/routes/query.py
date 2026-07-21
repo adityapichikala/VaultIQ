@@ -61,14 +61,23 @@ async def query_sync(
     """
     user_roles = _resolve_roles_from_header(x_user_roles, body.user_roles)
 
-    # Hybrid retrieval (dense Qdrant + sparse BM25 + RRF + ACL filter)
+    # Optional PII Sanitization
+    query_text = body.query
+    pii_counts = {}
+    if body.sanitize_pii:
+        from src.security import PIISanitizer
+        sanitizer = PIISanitizer()
+        query_text, pii_counts = sanitizer.sanitize_text(query_text)
+
+    # Hybrid retrieval (dense Qdrant + sparse BM25 + RRF + ACL + Cross-Encoder)
     try:
         results = retriever.retrieve(
-            query=body.query,
+            query=query_text,
             user_roles=user_roles,
             top_k=body.top_k,
             apply_temporal_decay=body.apply_temporal_decay,
             decay_half_life_days=body.decay_half_life_days,
+            enable_reranker=body.enable_reranker,
         )
     except Exception as e:
         logger.error(f"Retrieval failed: {e}")
@@ -83,7 +92,7 @@ async def query_sync(
 
     try:
         response = rag_chain.generate(
-            query=body.query,
+            query=query_text,
             retrieved_chunks=results,
             temperature=body.temperature,
         )
@@ -91,12 +100,18 @@ async def query_sync(
         logger.error(f"LLM generation failed: {e}")
         raise HTTPException(status_code=500, detail=f"Generation error: {str(e)}")
 
+    # RAG Triad Evaluation
+    from src.evaluation import RAGTriadEvaluator
+    evaluator = RAGTriadEvaluator()
+    triad = evaluator.evaluate(query_text, response["answer"], results)
+
     return QueryResponse(
         answer=response["answer"],
         sources=response["sources"],
         model=response["model"],
         usage=response["usage"],
         retrieval_count=len(results),
+        triad_metrics=triad,
     )
 
 
@@ -132,15 +147,21 @@ async def _stream_rag_response(
             stream=True,  # Enable streaming
         )
 
-        total_tokens = 0
+        full_answer_tokens = []
         for chunk in stream:
             delta = chunk.choices[0].delta
             if delta.content:
+                full_answer_tokens.append(delta.content)
                 token_data = json.dumps({"token": delta.content, "done": False})
                 yield f"data: {token_data}\n\n"
                 await asyncio.sleep(0)  # Yield control to event loop
 
-        # Final event with sources and debug pipeline breakdown
+        full_answer = "".join(full_answer_tokens)
+        from src.evaluation import RAGTriadEvaluator
+        evaluator = RAGTriadEvaluator()
+        triad = evaluator.evaluate(query, full_answer, results)
+
+        # Final event with sources, triad metrics, and debug pipeline breakdown
         sources = rag_chain._extract_sources(results)
         chunks_debug = [
             {
@@ -149,6 +170,7 @@ async def _stream_rag_response(
                 "title": r.get("title", ""),
                 "source_type": r.get("source_type", ""),
                 "rrf_score": round(r.get("rrf_score", 0.0), 5),
+                "cross_encoder_score": round(r.get("cross_encoder_score", 0.0), 4),
                 "decay_multiplier": round(r.get("decay_multiplier", 1.0), 3),
                 "effective_date": r.get("effective_date", "2026-07-21"),
                 "acl_roles": r.get("acl_roles", []),
@@ -158,6 +180,7 @@ async def _stream_rag_response(
         final_data = json.dumps({
             "sources": sources,
             "chunks_debug": chunks_debug,
+            "triad_metrics": triad,
             "done": True,
         })
         yield f"data: {final_data}\n\n"
@@ -183,7 +206,7 @@ async def query_stream(
 
     **SSE Events:**
     - `data: {"token": "...", "done": false}` — each generated token
-    - `data: {"sources": [...], "done": true}` — final event with citations
+    - `data: {"sources": [...], "done": true}` — final event with citations & triad metrics
     """
     user_roles = _resolve_roles_from_header(x_user_roles, body.user_roles)
 
@@ -193,20 +216,28 @@ async def query_stream(
             detail="LLM generation unavailable. GROQ_API_KEY not configured.",
         )
 
+    # Optional PII Sanitization
+    query_text = body.query
+    if body.sanitize_pii:
+        from src.security import PIISanitizer
+        sanitizer = PIISanitizer()
+        query_text, _ = sanitizer.sanitize_text(query_text)
+
     # Retrieval (synchronous — must complete before streaming begins)
     try:
         results = retriever.retrieve(
-            query=body.query,
+            query=query_text,
             user_roles=user_roles,
             top_k=body.top_k,
             apply_temporal_decay=body.apply_temporal_decay,
             decay_half_life_days=body.decay_half_life_days,
+            enable_reranker=body.enable_reranker,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Retrieval error: {str(e)}")
 
     return StreamingResponse(
-        _stream_rag_response(body.query, results, rag_chain, body.temperature),
+        _stream_rag_response(query_text, results, rag_chain, body.temperature),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

@@ -48,6 +48,14 @@ class QueryRequest(BaseModel):
         le=3650.0,
         description="Half-life in days for recency temporal decay.",
     )
+    enable_reranker: bool = Field(
+        default=True,
+        description="If True, applies 2nd-stage neural Cross-Encoder reranking.",
+    )
+    sanitize_pii: bool = Field(
+        default=True,
+        description="If True, applies PII redaction to prompt input.",
+    )
 
 
 class IngestRequest(BaseModel):
@@ -93,7 +101,6 @@ class DatasetListResponse(BaseModel):
     total_datasets: int
 
 
-
 # ─── Response Models ──────────────────────────────────────────────
 
 class SourceDoc(BaseModel):
@@ -101,6 +108,14 @@ class SourceDoc(BaseModel):
     file: str
     title: str
     type: str
+
+
+class RAGTriadMetrics(BaseModel):
+    """RAG Triad evaluation metrics."""
+    context_precision: float
+    faithfulness: float
+    answer_relevance: float
+    overall_score: float
 
 
 class QueryResponse(BaseModel):
@@ -112,6 +127,10 @@ class QueryResponse(BaseModel):
     usage: dict = Field(description="Token usage statistics from the LLM API.")
     retrieval_count: int = Field(
         description="Number of document chunks retrieved before ACL filtering."
+    )
+    triad_metrics: Optional[RAGTriadMetrics] = Field(
+        default=None,
+        description="Inline RAG Triad quality metrics.",
     )
 
 

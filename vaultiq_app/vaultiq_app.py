@@ -76,6 +76,7 @@ class State(rx.State):
 
     last_debug_chunks: list[dict] = []
     last_query_text: str = ""
+    last_triad_metrics: dict = {}
 
     # Navigation & Temporal Decay settings
     active_tab: str = "chat"
@@ -158,6 +159,7 @@ class State(rx.State):
     def clear_chat(self):
         self.messages = []
         self.last_debug_chunks = []
+        self.last_triad_metrics = {}
         self.error_message = ""
 
     @rx.event
@@ -205,6 +207,8 @@ class State(rx.State):
             "temperature": 0.1,
             "apply_temporal_decay": self.apply_temporal_decay,
             "decay_half_life_days": self.decay_half_life_days,
+            "enable_reranker": True,
+            "sanitize_pii": True,
         }
 
         full_answer = ""
@@ -240,6 +244,7 @@ class State(rx.State):
                                         for s in raw_sources
                                     ]
                                     self.last_debug_chunks = data.get("chunks_debug", [])
+                                    self.last_triad_metrics = data.get("triad_metrics", {})
                             except json.JSONDecodeError:
                                 pass
         except Exception as e:

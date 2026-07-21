@@ -1,3 +1,7 @@
+.states
+*.db
+.web
+assets/external/
 __pycache__/
 *.py[cod]
 *.env
@@ -18,3 +22,7 @@ data/ingested_documents.json
 01_Workflow_Guide.md
 02_Technical_Problem_Compendium.md
 03_Deliverables_Specification.md
+
+# Generated indexes & locks
+bm25_index.pkl
+reflex.lock/

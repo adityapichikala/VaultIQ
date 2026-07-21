@@ -121,25 +121,32 @@ def acl_filter(results: list[dict], user_roles: list[str]) -> list[dict]:
 
 
 class HybridRetriever:
-    """Orchestrates hybrid retrieval: dense + sparse + fusion + ACL.
+    """Orchestrates hybrid retrieval: dense + sparse + RRF fusion + temporal decay + reranking + ACL.
 
     Pipeline:
     1. Dense search via Qdrant (top-20)
     2. Sparse search via BM25 (top-20)
-    3. RRF fusion → top-10
+    3. RRF fusion with temporal decay
     4. ACL filtering → authorized results only
+    5. 2nd-stage Neural Cross-Encoder Reranking (top-k)
     """
 
-    def __init__(self, embedding_engine, qdrant_index, bm25_index):
+    def __init__(self, embedding_engine, qdrant_index, bm25_index, reranker=None):
         """
         Args:
             embedding_engine: EmbeddingEngine instance for query encoding.
             qdrant_index: QdrantIndex instance for dense search.
             bm25_index: BM25Index instance for sparse search.
+            reranker: CrossEncoderReranker instance (optional).
         """
         self.embedding_engine = embedding_engine
         self.qdrant_index = qdrant_index
         self.bm25_index = bm25_index
+        if reranker is None:
+            from .reranker import CrossEncoderReranker
+            self.reranker = CrossEncoderReranker()
+        else:
+            self.reranker = reranker
 
     def retrieve(
         self,
@@ -150,6 +157,7 @@ class HybridRetriever:
         sparse_top_k: int = 20,
         apply_temporal_decay: bool = True,
         decay_half_life_days: float = 180.0,
+        enable_reranker: bool = True,
     ) -> list[dict]:
         """Run the full hybrid retrieval pipeline.
 
@@ -161,9 +169,10 @@ class HybridRetriever:
             sparse_top_k: Number of results from sparse search.
             apply_temporal_decay: Whether to weight results by recency.
             decay_half_life_days: Half-life parameter in days for recency decay.
+            enable_reranker: Whether to run 2nd-stage neural cross-encoder reranking.
 
         Returns:
-            List of top-k relevant, ACL-filtered results.
+            List of top-k relevant, ACL-filtered, reranked results.
         """
         if user_roles is None:
             user_roles = ["all-employees"]
@@ -189,7 +198,7 @@ class HybridRetriever:
         fused = reciprocal_rank_fusion(
             dense_results,
             sparse_results,
-            top_n=top_k * 3,  # Get extra for ACL filtering
+            top_n=top_k * 3,  # Get extra for ACL filtering & reranking
             apply_temporal_decay=apply_temporal_decay,
             decay_half_life_days=decay_half_life_days,
         )
@@ -197,5 +206,10 @@ class HybridRetriever:
         # 4. ACL filter
         filtered = acl_filter(fused, user_roles)
 
-        # Return top-k
+        # 5. 2nd-Stage Cross-Encoder Reranking
+        if enable_reranker and self.reranker and filtered:
+            reranked = self.reranker.rerank(query, filtered, top_k=top_k)
+            return reranked
+
+        # Return top-k if reranker disabled
         return filtered[:top_k]

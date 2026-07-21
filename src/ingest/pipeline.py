@@ -1,10 +1,6 @@
-"""
-Ingestion pipeline for VaultIQ.
-Orchestrates all parsers to ingest documents from the synthetic data directory.
-"""
-
 import os
 import json
+import hashlib
 from loguru import logger
 
 from . import Document
@@ -12,13 +8,15 @@ from .markdown_parser import MarkdownParser
 from .pdf_parser import PDFParser
 from .slack_parser import SlackParser
 from .csv_parser import CSVParser
+from ..security import PIISanitizer
 
 
 class IngestionPipeline:
     """Orchestrates document ingestion from all source types.
 
     Scans the data directory, routes files to the appropriate parser,
-    and returns a unified list of Document objects.
+    applies PII redaction and SHA-256 deduplication, and returns a unified list
+    of Document objects.
     """
 
     def __init__(self):
@@ -26,6 +24,8 @@ class IngestionPipeline:
         self.pdf_parser = PDFParser()
         self.slack_parser = SlackParser()
         self.csv_parser = CSVParser()
+        self.sanitizer = PIISanitizer()
+        self.seen_hashes: set[str] = set()
         self._documents: list[Document] = []
 
     @property
@@ -50,6 +50,7 @@ class IngestionPipeline:
             List of all parsed Document objects.
         """
         self._documents = []
+        self.seen_hashes = set()
 
         # Ingest wiki/markdown files
         wiki_dir = os.path.join(data_dir, "wiki")
@@ -71,8 +72,26 @@ class IngestionPipeline:
         if os.path.isdir(csv_dir):
             self._ingest_csv(csv_dir)
 
+        # Post-process: Deduplication via SHA-256 + PII Sanitization
+        sanitized_docs = []
+        for doc in self._documents:
+            content_hash = hashlib.sha256(doc.content.encode("utf-8")).hexdigest()
+            if content_hash in self.seen_hashes:
+                logger.debug(f"Skipping duplicate document content: {doc.title} ({doc.source_file})")
+                continue
+
+            self.seen_hashes.add(content_hash)
+            sanitized_content, counts = self.sanitizer.sanitize_text(doc.content)
+            doc.content = sanitized_content
+            if counts:
+                doc.metadata["pii_sanitized"] = True
+                doc.metadata["pii_counts"] = counts
+            sanitized_docs.append(doc)
+
+        self._documents = sanitized_docs
+
         logger.info(
-            f"Ingestion complete: {len(self._documents)} documents from {data_dir}"
+            f"Ingestion complete: {len(self._documents)} documents (deduplicated & PII scrubbed) from {data_dir}"
         )
         self._print_summary()
 
