@@ -183,3 +183,58 @@ async def delete_dataset(dataset_name: str):
         "dataset_name": dataset_name,
         "message": f"Successfully deleted dataset '{dataset_name}' and purged index.",
     }
+
+
+@router.delete("/documents/{filename}", summary="Delete Specific Document")
+async def delete_specific_document(filename: str):
+    """
+    Deletes chunks belonging to a single specific document by filename 
+    (e.g., 'vendor_list.csv' or 'leave_policy.md') from both Qdrant and BM25 index.
+    """
+    from ..dependencies import get_qdrant_index, get_bm25_index
+    from qdrant_client.http import models
+
+    qdrant = get_qdrant_index()
+    bm25 = get_bm25_index()
+
+    chunks_removed = 0
+
+    # 1. Purge from BM25 in-memory index
+    if bm25 and hasattr(bm25, "chunks"):
+        initial_len = len(bm25.chunks)
+        bm25.chunks = [
+            c for c in bm25.chunks 
+            if c.source_file != filename and not c.source_file.endswith("/" + filename) and not c.source_file.endswith("\\" + filename)
+        ]
+        chunks_removed = initial_len - len(bm25.chunks)
+        project_root = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        )
+        bm25.save(os.path.join(project_root, "bm25_index.pkl"))
+
+    # 2. Purge from Qdrant vector index
+    if qdrant:
+        try:
+            qdrant.client.delete(
+                collection_name=qdrant.collection_name,
+                points_selector=models.FilterSelector(
+                    filter=models.Filter(
+                        should=[
+                            models.FieldCondition(
+                                key="source_file",
+                                match=models.MatchValue(value=filename),
+                            )
+                        ]
+                    )
+                ),
+            )
+        except Exception as e:
+            logger.warning(f"Qdrant document deletion warning: {e}")
+
+    logger.info(f"Targeted deletion complete for '{filename}': {chunks_removed} chunks removed.")
+    return {
+        "status": "deleted",
+        "filename": filename,
+        "chunks_removed": chunks_removed,
+        "message": f"Successfully deleted document '{filename}' from vector and sparse indices.",
+    }
