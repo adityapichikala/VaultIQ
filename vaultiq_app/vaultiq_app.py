@@ -79,6 +79,38 @@ class State(rx.State):
     apply_temporal_decay: bool = True
     decay_half_life_days: float = 180.0
     status_message: str = ""
+    target_filename_to_delete: str = ""
+    delete_doc_status: str = ""
+
+    @rx.event
+    def set_target_filename(self, val: str):
+        self.target_filename_to_delete = val
+
+    @rx.event
+    async def delete_target_document(self):
+        if not self.target_filename_to_delete.strip():
+            return
+
+        filename = self.target_filename_to_delete.strip()
+        self.is_loading = True
+        self.delete_doc_status = f"Deleting '{filename}'..."
+        yield
+
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                r = await client.delete(f"{API_BASE}/documents/{filename}")
+                if r.status_code == 200:
+                    data = r.json()
+                    chunks_removed = data.get("chunks_removed", 0)
+                    self.delete_doc_status = f"✅ Successfully deleted '{filename}' ({chunks_removed} chunks purged)."
+                    self.target_filename_to_delete = ""
+                    await self.load_health()
+                else:
+                    self.delete_doc_status = f"⚠️ Deletion failed with HTTP {r.status_code}"
+        except Exception as e:
+            self.delete_doc_status = f"⚠️ Error: {str(e)[:60]}"
+        self.is_loading = False
+        yield
 
     @rx.event
     def set_tab(self, tab: str):
@@ -554,6 +586,53 @@ def data_studio_view() -> rx.Component:
             ),
             style={
                 "background": CARD, "border": f"1px solid {BORDER}",
+                "border_radius": "14px", "padding": "20px", "width": "100%", "margin_top": "1.5em",
+            },
+        ),
+
+        # Targeted Single-Document Deletion Card
+        rx.box(
+            rx.vstack(
+                rx.heading("🎯 Targeted Single-Document Deletion", font_size="1.1em", font_weight="700", color=TXT),
+                rx.text("Surgically delete chunks for a specific document by file name without affecting the rest of the search index.", font_size="0.82em", color=TXT2),
+                rx.cond(
+                    State.delete_doc_status != "",
+                    rx.box(
+                        rx.text(State.delete_doc_status, font_size="0.82em", color="#ef4444"),
+                        style={"background": "#ef444415", "border": "1px solid #ef444430", "border_radius": "8px", "padding": "8px 12px"},
+                    ),
+                    rx.box(),
+                ),
+                rx.hstack(
+                    rx.input(
+                        value=State.target_filename_to_delete,
+                        on_change=State.set_target_filename,
+                        placeholder="e.g., vendor_list.csv or company_remote_work_policy.md",
+                        style={
+                            "background": BG2, "color": TXT,
+                            "border": f"1px solid {BORDER}",
+                            "border_radius": "10px", "padding": "10px 14px",
+                            "font_size": "0.88em", "flex": "1",
+                            "_focus": {"outline": "none", "border_color": "#ef4444"},
+                        },
+                    ),
+                    rx.button(
+                        rx.cond(State.is_loading, rx.spinner(size="2"), rx.text("🗑️ Delete Document", font_weight="700")),
+                        on_click=State.delete_target_document,
+                        disabled=State.is_loading,
+                        style={
+                            "background": "#ef4444", "color": "#ffffff",
+                            "border": "none", "border_radius": "10px",
+                            "padding": "10px 18px", "font_size": "0.88em", "cursor": "pointer",
+                            "_hover": {"background": "#dc2626"},
+                        },
+                    ),
+                    spacing="3", width="100%", align_items="center",
+                ),
+                spacing="3", align_items="start", width="100%",
+            ),
+            style={
+                "background": CARD, "border": f"1px solid #ef444430",
                 "border_radius": "14px", "padding": "20px", "width": "100%", "margin_top": "1.5em",
             },
         ),
