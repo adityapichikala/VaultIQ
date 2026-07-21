@@ -46,12 +46,12 @@ app = FastAPI(
 # Allow the Next.js frontend (running on port 3000) to call this API.
 # Restrict origins in production via ALLOWED_ORIGINS env var.
 allowed_origins = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8501"
+    "ALLOWED_ORIGINS", "*"
 ).split(",")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
