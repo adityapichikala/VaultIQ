@@ -1,113 +1,211 @@
-# VaultIQ — The Smart Enterprise Search Assistant
+# VaultIQ — Enterprise Hybrid RAG Search & Governance Engine
 
-> Segment 5 · Problem E3 · LLM Systems & Applied GenAI  
-> **Built by:** Pichikala Aditya | **Target role:** LLM Engineer / GenAI Engineer
+VaultIQ is a production-grade, secure **Retrieval-Augmented Generation (RAG)** platform designed for enterprise knowledge management. It integrates multi-source document ingestion, hybrid semantic-lexical search, temporal recency decay scoring, neural Cross-Encoder reranking, role-based Access Control Lists (ACLs), automated PII sanitization, and inline RAG Triad metrics evaluation.
 
----
-
-## 🎯 Project Objective
-
-Imagine working at a large company where important information is scattered everywhere: inside **PDFs**, **Slack conversations**, **Markdown wikis**, and **CSV spreadsheets**. When an employee has a question, finding the right answer is a nightmare.
-
-**VaultIQ solves this problem.** It is an intelligent search assistant that reads through all of a company's messy, scattered data and uses Artificial Intelligence to answer questions accurately. Most importantly, it uses **Role-Based Access Control (ACL)**—meaning an intern cannot ask the AI to summarize confidential HR salary spreadsheets that only executives should see.
+Built with a microservice architecture consisting of a **FastAPI backend** and a **Reflex modern web app**, VaultIQ ensures data governance and lightning-fast search latency.
 
 ---
 
-## 🏗️ Our Approach & Architecture (How It Works)
+## 🏗️ System Architecture Flow
 
-To build this, we used a cutting-edge AI architecture called **Retrieval-Augmented Generation (RAG)**. Here is a simple breakdown of how the system works behind the scenes when you ask it a question:
+The following diagram illustrates how user queries and documents traverse the ingestion and retrieval pipelines:
 
-1. **Ingestion (Reading the Data):** The system automatically reads all company files (**PDFs, Slack, CSVs, Markdown**) and chops them up into small, readable chunks of text.
-2. **Storage (Brain of the System):** We convert these text chunks into mathematical numbers (called **Vector Embeddings**) using the **all-MiniLM-L6-v2** AI model. We store these numbers securely in a vector database called **Qdrant**, alongside a traditional keyword database called **BM25**.
-3. **Hybrid Search (Finding the Answer):** When you ask a question, the system searches both databases simultaneously to find the exact paragraphs that contain your answer. We combine these results using a technique called **Reciprocal Rank Fusion (RRF)**.
-4. **Security Filter (ACL):** Before the AI sees the information, the system checks your employee role (e.g., Engineering, HR). It permanently **blocks** any secret files you aren't allowed to see.
-5. **AI Generation (Speaking to You):** Finally, we send the approved, relevant paragraphs to a powerful Large Language Model (**Groq Llama-3-8B**). The AI reads the context and writes a perfect, conversational answer for you, complete with **inline citations** proving exactly where it got the information.
+```
+                      [ INGESTION PIPELINE ]
+                      
+  Markdown Wiki       PDF Files       Slack JSON       CSV Sheets
+        │                 │                │                │
+        ▼                 ▼                ▼                ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │                  Multi-Format Parser Module                 │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │            Asynchronous PII Redaction Middleware            │
+   │      (Scrubs SSNs, API Keys, Credit Cards, and Emails)      │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │         SHA-256 Content Deduplication Hash Registry         │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │            Recursive Chunk Splitter (500 chars)             │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ├──────────────────────────────┐
+                                  ▼                              ▼
+                       ┌────────────────────┐          ┌───────────────────┐
+                       │ SentenceTransformer│          │    Lexical BM25   │
+                       │ (all-MiniLM-L6-v2) │          │    Okapi Index    │
+                       └──────────┬─────────┘          └─────────┬─────────┘
+                                  ▼                              ▼
+                       ┌────────────────────┐          ┌───────────────────┐
+                       │ Qdrant Vector DB   │          │ BM25 serialized   │
+                       │ (HNSW Dense Index) │          │    Pickle file    │
+                       └────────────────────┘          └───────────────────┘
 
-![Architecture Diagram](docs/architecture.md)
-*(For a deeper technical dive, please see the architecture diagram and ADR documents in the `/docs` folder).*
+─────────────────────────────────────────────────────────────────────────
+
+                      [ RETRIEVAL & RAG CHAIN ]
+
+                              User Query
+                                  │
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │                  Role-Based JWT Scope (ACL)                 │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │          PII Query Scrubber (Saves prompt privacy)          │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ▼
+                        Dual-Index Retrieval
+                        ├── Dense Search (Qdrant Cosine top-20)
+                        └── Sparse Search (BM25 term-freq top-20)
+                                  │
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │               Reciprocal Rank Fusion (RRF)                  │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │             Temporal Recency Decay Weighting                │
+   │                   exp(-λ * Age_in_Days)                     │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │           Role-Based Access Control Filtering (ACL)         │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │         2nd-Stage Neural Cross-Encoder Reranking            │
+   │             (Re-scores top-15 RRF candidates)               │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │               LLaMA-3.1 8B Instant via Groq LPU             │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ▼
+   ┌─────────────────────────────────────────────────────────────┐
+   │                RAG Triad Metric Evaluator                   │
+   │      - Groundedness / Faithfulness (claims vs context)      │
+   │      - Context Precision (relevant retrieved ratio)          │
+   │      - Answer Relevance (semantic overlap with query)       │
+   └──────────────────────────────┬──────────────────────────────┘
+                                  ▼
+                    Real-time SSE Token Stream
+```
 
 ---
 
-## 🌟 What Makes This Project Stand Out (Key Features)
+## 🌟 Key Features
 
-- **Role-Based Access Control (ACL):** The AI strictly enforces document security at the database level.
-- **Hybrid Retrieval Pipeline:** By combining semantic meaning (**Qdrant vectors**) with exact keyword matching (**BM25 sparse index**), the search engine rarely misses an answer.
-- **Multi-Modal Data Handling:** It doesn't just read plain text; it parses messy enterprise data formats like Slack JSON threads and CSV tables.
-- **Lightning Fast AI:** Powered by the **Groq AI Engine**, answers are generated almost instantly.
+1. **Dual-Stage Hybrid Search & Neural Reranking:**
+   - **Stage 1:** Combines dense semantics (`all-MiniLM-L6-v2` in Qdrant) with lexical precision (`BM25Okapi`) fused via **Reciprocal Rank Fusion (RRF)**.
+   - **Stage 2:** A neural Cross-Encoder (`ms-marco-MiniLM-L-6-v2`) evaluates joint query-passage cross-attention to filter false positives.
+   - **Snappy Fallback:** Falls back to an optimized keyword-overlap heuristic if neural weights are offline, ensuring zero presentation delays.
 
----
+2. **Data Governance & PII Redaction Middleware:**
+   - Regex-based high-performance scrubbing scrubs Social Security Numbers (SSNs), Credit Card Numbers, Email Addresses, and API Secrets/Keys (e.g. AWS credentials) from ingested documents and incoming queries before LLM prompt submission.
 
-## 💻 What It Looks Like After Completion
+3. **Role-Based Access Control Lists (ACLs):**
+   - Restricts retrieved paragraphs dynamically based on user identity (e.g., leadership, engineering, HR, or all-employees).
 
-When the project is fully running, you will be presented with a clean, interactive **Streamlit Chat Interface**. 
-- On the left sidebar, you can use a dropdown menu to select your "Role" (e.g., HR, Engineering, Leadership).
-- In the center, you can chat with the AI just like ChatGPT.
-- When the AI answers, it will provide clickable **Source Citations** so you can see the exact document it used to formulate its answer.
+4. **Temporal Recency Decay:**
+   - Integrates exponential age-decay parameters ($S_{\text{decay}} = S_{\text{base}} \times e^{-\lambda \Delta t}$) to rank active, updated documents higher than stale ones.
 
----
-
-## 📅 Project Timeline & Weekly Breakdown
-
-This project was carefully planned and executed over a **4-week timeline**:
-
-- **Week 1 (Foundation):** Defined the problem statement, generated the massive synthetic enterprise dataset, and built the initial Python parsers to read the files.
-- **Week 2 (Core RAG & UI):** Built the document chunking logic, implemented the **Qdrant** and **BM25** databases, wrote the hybrid search fusion, connected the **Groq LLM**, and built the entire **Streamlit** user interface.
-- **Week 3 (Hardening & Testing):** Focused on enterprise reliability. Wrote automated **pytest** suites, set up **GitHub Actions** for Continuous Integration (CI), added robust error handling, and drafted technical architecture memos (ADRs).
-- **Week 4 (Deployment - Upcoming):** Finalizing the live deployment of the app to a public URL and polishing the final "Thinking Artifacts" for recruiters.
+5. **Live RAG Triad Metrics Governance:**
+   - Real-time quality evaluation: computes Groundedness/Faithfulness, Context Precision, and Answer Relevance. Displays these scores as color-coded badges in the UI.
 
 ---
 
-## 🚀 Step-by-Step Installation Guide
+## 📂 Project Structure
 
-Want to run VaultIQ on your own computer? Follow these simple steps. You don't need to be a developer to get this working!
+```
+VaultIQ/
+├── docs/                     # ADRs and design decisions
+├── src/
+│   ├── api/                  # FastAPI endpoints & routes
+│   ├── evaluation/           # RAG Triad evaluation metrics
+│   ├── ingest/               # Parsers for MD, PDF, Slack JSON, CSV
+│   ├── retrieval/            # Hybrid retriever, RRF, decay, reranker
+│   └── security/             # PII sanitization regex middleware
+├── tests/                    # Pytest unit & integration tests
+├── vaultiq_app/              # Reflex frontend & application state
+├── requirements.txt          # Python dependencies
+└── README.md                 # Project documentation
+```
 
-### Step 1: Prerequisites
-You will need two things installed on your computer:
-1. **Python** (Version 3.10 or newer)
-2. A free **Groq API Key**. You can get one in 30 seconds by logging in at [console.groq.com](https://console.groq.com) and clicking "Create API Key".
+---
 
-### Step 2: Download the Code
-Open your computer's terminal (or command prompt) and run this command to download the project:
+## 🚀 Getting Started
+
+### 📋 Prerequisites
+- **Python 3.10 – 3.14**
+- A free **Groq API Key** (from [console.groq.com](https://console.groq.com))
+
+### 🔧 Setup & Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/adityapichikala/VaultIQ.git
+   cd VaultIQ
+   ```
+
+2. **Create and activate a virtual environment:**
+   ```bash
+   python -m venv venv
+   # On Windows:
+   venv\Scripts\activate
+   # On Mac/Linux:
+   source venv/bin/activate
+   ```
+
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure environment variables:**
+   Create a `.env` file in the project root:
+   ```text
+   GROQ_API_KEY=gsk_your_api_key_here
+   ```
+
+5. **Build the hybrid indexes:**
+   Parse raw documents and populate Qdrant & BM25 indexes:
+   ```bash
+   python -m src.retrieval.build_index
+   ```
+
+---
+
+## 🏃 Running the Platform
+
+To run the full stack, you need to spin up the FastAPI backend and the Reflex web application.
+
+### 1. Launch FastAPI Backend
 ```bash
-git clone https://github.com/adityapichikala/VaultIQ.git
-cd VaultIQ
+python -m uvicorn src.api.main:app --port 8000
 ```
+*API Swagger Documentation is available at: [http://localhost:8000/docs](http://localhost:8000/docs)*
 
-### Step 3: Setup the Environment
-We will create a safe, isolated environment for the code to run in, and then install the required packages:
+### 2. Launch Reflex Web UI App
 ```bash
-# Create the virtual environment
-python -m venv venv
-
-# Activate it (If you are on Windows):
-venv\Scripts\activate
-# Activate it (If you are on Mac/Linux):
-source venv/bin/activate
-
-# Install the required software
-pip install -r requirements.txt
+python -m reflex run
 ```
-
-### Step 4: Add Your AI Key
-In the `VaultIQ` folder, create a new text file named exactly `.env`. Inside that file, paste your Groq API key like this:
-```text
-GROQ_API_KEY=gsk_your_secret_key_here
-```
-
-### Step 5: Build the Search Brain
-Run this command to have the system read the dummy company data, build the vector database, and prepare the search engine. *(Note: This might take 1-2 minutes the first time you run it!)*
-```bash
-python -m src.retrieval.build_index
-```
-
-### Step 6: Launch the App!
-Run this final command to start the user interface:
-```bash
-streamlit run src/app/streamlit_app.py
-```
-Your browser will automatically open to `http://localhost:8501`, and you can start chatting with VaultIQ!
+*Open **[http://localhost:3000](http://localhost:3000)** in your browser.*
 
 ---
 
-## License
-MIT License
+## 🧪 Testing
+
+Run the automated test suite covering parsing, security redaction, reranking, and evaluation metrics:
+```bash
+python -m pytest tests/ -v
+```
+
+---
+
+## 📜 License
+This project is licensed under the MIT License.
